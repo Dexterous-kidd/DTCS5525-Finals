@@ -1,0 +1,14 @@
+# Pin exact versions on the GPU server after the first successful install:  pip freeze > requirements.lock
+numpy
+scipy
+pandas
+pyarrow
+statsmodels
+matplotlib
+pyyaml
+tabulate
+tqdm
+transformers        # tokenizers for the 6,000-token filter
+huggingface_hub
+vllm                # GPU server only (not needed for the mock smoke test)
+pytest

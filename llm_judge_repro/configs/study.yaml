@@ -1,0 +1,64 @@
+seed: 1234
+paths:
+  raw_arena: data/raw/arena-human-preference-140k   # directory of parquet files
+  raw_mt: data/raw/mt_bench_human_judgments         # directory with the 'human' split parquet
+  processed: data/processed
+  verdicts: data/verdicts          # append-only verdict record (public-safe: ids and labels only)
+  private: data/private            # raw model text, coding sheets (never released)
+  results: results                 # one folder per run: logs, tables, figures, results.jsonl
+judge_config: configs/judges.yaml
+prompts: {single: prompts/pairwise_single.txt, multi: prompts/pairwise_multi.txt}
+
+arena:
+  columns: {id: id, model_a: model_a, model_b: model_b, winner: winner,
+            conv_a: conversation_a, conv_b: conversation_b, language: language}
+  excluded_families: [gpt-oss, qwen]     # substring match on lowercased system names
+  max_tokens: 6000
+  length_tokenizer: Qwen/Qwen3-8B        # tokenizer for the length filter ("approx" = chars/4)
+  english_only: true
+  min_battles_per_pair: 160
+  battles_per_pair: 160
+  n_dev: 32
+  n_close: 40
+  n_far: 10
+  margin_bootstrap: 2000
+  gate_min_pairs: 30
+
+mt:
+  n_dev_q_per_cat: 2
+  n_test_q_per_cat: 8
+
+generation:
+  gen_seeds: [11, 22, 33, 44]    # gen 0 = temperature 0; gens 1..4 = sampled with these seeds
+  retry_seed_start: 101
+  max_tokens: 1024
+  chunk_size: 2000
+  orders: [AB, BA]
+
+sim:
+  budgets: {arena: [16, 32, 64, 128], mt: [16, 32, 64]}
+  tune_budget: 32
+  coverage: 0.80
+  coverage_fallback: 0.70
+  n_draws_point: 200
+  n_draws_boot: 100
+  n_boot: 1000
+  analysis_seeds: [1, 2, 3, 4, 5]
+  n_jobs: 8
+  risk_coverage_grid: [0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0]
+
+hypotheses:
+  h1a: {budget: 64, threshold: 0.05}
+  h2: {budget: 64, min_effect: 0.03}
+  noninferiority_margin: 0.03
+  h3: {slope: [0.8, 1.2], spearman: 0.8, best_protocol_share: 0.8}
+
+checks:
+  determinism_n: 200
+  contamination_arena_n: 200
+  contamination_mt_n: 80
+  contamination_threshold: 0.8
+
+smoke_overrides:       # used only by `python -m judgestudy smoke`
+  arena: {n_close: 12, n_far: 6, margin_bootstrap: 200, gate_min_pairs: 10, max_tokens: 100000, length_tokenizer: approx}
+  sim: {n_boot: 30, n_draws_boot: 30, n_draws_point: 60, n_jobs: 1, analysis_seeds: [1, 2]}
